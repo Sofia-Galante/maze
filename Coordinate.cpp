@@ -4,7 +4,7 @@
 
 #include "Coordinate.h"
 
-Coordinate::Coordinate(int x = 0, int y = 0) {
+Coordinate::Coordinate(int x, int y) {
     setCoordinate(x, y);
 }
 

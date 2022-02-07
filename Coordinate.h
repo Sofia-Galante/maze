@@ -9,6 +9,9 @@ class Coordinate{
 public:
     Coordinate(int x = 0, int y = 0);
     void setCoordinate(int x, int y);
+    void setCoordinate(Coordinate p){
+        setCoordinate(p.getX(), p.getY());
+    }
     int getX(){
         return point[0];
     }
@@ -16,16 +19,21 @@ public:
         return point[1];
     }
 
-    bool operator==(Coordinate &right) const{
-        if (point == right.point)
-            return true;
-        return false;
-    }
-
-    bool operator!=(Coordinate &right) {
-        if (point == right.point)
+    bool operator==(const Coordinate &right) const{
+        if (point[0] != right.point[0])
+            return false;
+        if (point[1] != right.point[1])
             return false;
         return true;
+    }
+
+
+    bool operator!=(const Coordinate &right) const{
+        if (point[0] != right.point[0])
+            return true;
+        if (point[1] != right.point[1])
+            return true;
+        return false;
     }
 
 private:

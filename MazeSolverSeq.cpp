@@ -11,12 +11,12 @@ Particle MazeSolverSeq::solve(Maze& maze, int numberOfParticles) {
     for(int i = 0; i<numberOfParticles; i++) {
         Particle p(start);
         bool exit = false;
-        while(!exit){
+        //while(!exit){
             //TODO: seleziona la mossa giusta
-            Coordinate move = p.move();
-            if (move.operator==(maze.getEnd()))
-                exit = true;
-        }
+            //Coordinate move = p.move();
+            //if (move.operator==(maze.getEnd()))
+                //exit = true;
+        //}
         particles.push_back(p);
     }
 

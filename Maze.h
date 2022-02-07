@@ -10,7 +10,7 @@
 
 class Maze {
 public:
-    explicit Maze(int h, int w);
+    explicit Maze(int w, int h);
     std::vector<Coordinate> getWalls();
 
     Coordinate getStart(){
@@ -22,12 +22,15 @@ public:
 
 private:
     Coordinate setStartOrEnd();
-    bool isEndValid(std::vector<Coordinate> p);
+    bool isPointValid(Coordinate point, std::vector<Coordinate> notValidPoints);
+    std::vector<Coordinate> validMoves(Coordinate p, std::vector<Coordinate> previousMoves);
     void createValidPath();
+    void placeWalls();
 
     int height;
     int width;
     std::vector<Coordinate> walls;
+    std::vector<Coordinate> path;
     Coordinate start;
     Coordinate end;
 };
