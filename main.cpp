@@ -8,5 +8,6 @@
 
 int main() {
     srand(time(NULL));
-    Maze m(10, 7);
+    Maze m(30, 30);
+
 }

@@ -24,8 +24,10 @@ private:
     Coordinate setStartOrEnd();
     bool isPointValid(Coordinate point, std::vector<Coordinate> notValidPoints);
     std::vector<Coordinate> validMoves(Coordinate p, std::vector<Coordinate> previousMoves);
-    void createValidPath();
+    void createMaze();
     void placeWalls();
+
+    void print();
 
     int height;
     int width;

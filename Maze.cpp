@@ -38,10 +38,8 @@ Maze::Maze(int w, int h) {
     printf("End = %d, %d\n", end.getX(), end.getY());
 
     printf("\n\n\n");
-    //genera il cammino valido
-    createValidPath();
-
-    //riempe il resto del labirinto
+    //genera il labirinto
+    createMaze();
 
 
 }
@@ -50,7 +48,7 @@ Coordinate Maze::setStartOrEnd() {
     int x, y;
     int wall = rand() % 4; // 0 = up, 1 = right, 2 = down, 3 = left
     if(wall == 0){
-        x = rand()%(width-1)+1;
+        x = rand()%(width-2)+1;
         y = height-1;
     }
     else if (wall == 1){
@@ -63,14 +61,14 @@ Coordinate Maze::setStartOrEnd() {
     }
     else {
         x = 0;
-        y = rand()%(height-1)+1;
+        y = rand()%(height-2)+1;
     }
 
     Coordinate point(x, y);
     return point;
 }
 
-void Maze::createValidPath() {
+void Maze::createMaze() {
     //std::vector<Coordinate> path;
     path.push_back(start);
     Coordinate p;
@@ -140,6 +138,45 @@ void Maze::createValidPath() {
         printf("SCELTO %d, %d\n", path.back().getX(), path.back().getY());
     }
 
+    printf("Cammino valido creato!\n\n");
+
+    //genera il resto del labirinto
+    Coordinate now;
+    std::vector<Coordinate> alreadyControlled;
+    for(auto it = path.begin() ; it != path.end(); ++it)
+        alreadyControlled.push_back(*it);
+
+    //cammina indietro riempendo tutto il resto del labirinto fino all'uscita
+
+    while(alreadyControlled.back().operator!=(start)){
+        moves = validMoves(alreadyControlled.back(), path);
+        while(moves.empty() && alreadyControlled.back().operator!=(start)){
+            alreadyControlled.pop_back();
+            printf("now = (%d, %d)\n", alreadyControlled.back().getX(), alreadyControlled.back().getY());
+            moves = validMoves(alreadyControlled.back(), path);
+            i++;
+        }
+        if(alreadyControlled.back().operator!=(start)){
+            //espande il cammino o mette un muro a random
+            path.push_back(moves[rand()%moves.size()]);
+            alreadyControlled.push_back(path.back());
+            //mette i muri se servono
+            placeWalls();
+        }
+    }
+
+    //mette un muro nei posti non esplorati se ce ne sono
+    if(width*height != walls.size()+path.size()){
+        for(int w = 0; w < width; w++){
+            for(int h = 0; h < height; h++){
+                now.setCoordinate(w, h);
+                if(!std::count(path.begin(), path.end(), now) && !std::count(walls.begin(), walls.end(), now))
+                    walls.push_back(now);
+            }
+        }
+    }
+
+    printf("\n\nCAMMINO\n");
     for(int i=0; i<path.size(); i++){
         printf("(%d, %d)", path[i].getX(), path[i].getY());
     }
@@ -148,6 +185,8 @@ void Maze::createValidPath() {
     for(auto it = walls.begin() ; it != walls.end(); ++it)
         printf("(%d, %d) ", it->getX(), it->getY());
     printf("\n");
+
+    print();
 }
 
 void Maze::placeWalls(){
@@ -156,21 +195,39 @@ void Maze::placeWalls(){
     Coordinate sw(path.back().getX()-1, path.back().getY()-1); //sud-ovest
     Coordinate nw(path.back().getX()-1, path.back().getY()+1); //nord-ovest
 
+    Coordinate point;
+
     if(std::count(path.begin(), path.end(), ne)) {
-        walls.emplace_back(ne.getX(), ne.getY()-1);
-        walls.emplace_back(ne.getX()-1, ne.getY());
+        point.setCoordinate(ne.getX(), ne.getY()-1);
+        if(!std::count(path.begin(), path.end(), point) && !std::count(walls.begin(), walls.end(), point))
+            walls.push_back(point);
+        point.setCoordinate(ne.getX()-1, ne.getY());
+        if(!std::count(path.begin(), path.end(), point) && !std::count(walls.begin(), walls.end(), point))
+            walls.push_back(point);
     }
     if(std::count(path.begin(), path.end(), se)) {
-        walls.emplace_back(se.getX(), se.getY()+1);
-        walls.emplace_back(se.getX()-1, se.getY());
+        point.setCoordinate(se.getX(), se.getY()+1);
+        if(!std::count(path.begin(), path.end(), point) && !std::count(walls.begin(), walls.end(), point))
+            walls.push_back(point);
+        point.setCoordinate(se.getX()-1, se.getY());
+        if(!std::count(path.begin(), path.end(), point) && !std::count(walls.begin(), walls.end(), point))
+            walls.push_back(point);
     }
     if(std::count(path.begin(), path.end(), sw)) {
-        walls.emplace_back(sw.getX(), sw.getY()+1);
-        walls.emplace_back(sw.getX()+1, sw.getY());
+        point.setCoordinate(sw.getX(), sw.getY()+1);
+        if(!std::count(path.begin(), path.end(), point) && !std::count(walls.begin(), walls.end(), point))
+            walls.push_back(point);
+        point.setCoordinate(sw.getX()+1, sw.getY());
+        if(!std::count(path.begin(), path.end(), point) && !std::count(walls.begin(), walls.end(), point))
+            walls.push_back(point);
     }
     if(std::count(path.begin(), path.end(), nw)) {
-        walls.emplace_back(nw.getX(), nw.getY()-1);
-        walls.emplace_back(nw.getX()+1, nw.getY());
+        point.setCoordinate(nw.getX(), nw.getY()-1);
+        if(!std::count(path.begin(), path.end(), point) && !std::count(walls.begin(), walls.end(), point))
+            walls.push_back(point);
+        point.setCoordinate(nw.getX()+1, nw.getY());
+        if(!std::count(path.begin(), path.end(), point) && !std::count(walls.begin(), walls.end(), point))
+            walls.push_back(point);
     }
 }
 
@@ -208,4 +265,24 @@ bool Maze::isPointValid(Coordinate point, std::vector<Coordinate> notValidPoints
 
 std::vector<Coordinate> Maze::getWalls() {
     return walls;
+}
+
+void Maze::print() {
+    //funzione provvisoria solo per capire come è fatto questo labirinto
+    Coordinate p;
+    printf("\n\nLABIRINTO\n");
+    for(int i=0; i<width; i++){
+        for(int j=0; j<height; j++){
+            p.setCoordinate(i, j);
+            if(std::count(walls.begin(), walls.end(), p))
+                printf("#");
+            else if(p.operator==(start))
+                printf("S");
+            else if(p.operator==(end))
+                printf("E");
+            else
+                printf("-");
+        }
+        printf("\n");
+    }
 }
