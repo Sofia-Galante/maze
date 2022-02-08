@@ -8,12 +8,13 @@
 
 Particle::Particle(Coordinate start) {
     steps = 0;
-    positions.push_back(start); //starting point
+    path.push_back(start); //starting point
 }
 
 Coordinate Particle::move(std::vector<Coordinate> availableMoves) {
     int n = rand() % availableMoves.size();
-    positions.push_back(availableMoves[n]);
-    steps ++;
+    path.push_back(availableMoves[n]);
     return availableMoves[n];
 }
+
+

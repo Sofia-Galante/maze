@@ -5,12 +5,16 @@
 #ifndef MAZE_MAZESOLVERSEQ_H
 #define MAZE_MAZESOLVERSEQ_H
 
-#include "Particle.h"
-#include "Maze.h"
+#include "MazeSolver.h"
 
-class MazeSolverSeq{
+class MazeSolverSeq : public MazeSolver {
 public:
-    Particle solve(Maze& maze, int numberOfParticles);
+    explicit MazeSolverSeq(Maze m) : MazeSolver(m){};
+    std::vector<Coordinate> solve(int numberOfParticles) override;
+
+private:
+    void moveParticle(Particle & p) override;
+    virtual void print(Particle * p) override;
 };
 
 #endif //MAZE_MAZESOLVERSEQ_H

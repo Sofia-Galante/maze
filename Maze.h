@@ -6,24 +6,39 @@
 #define MAZE_MAZE_H
 
 #include <vector>
+#include <cstdlib>
+#include <algorithm>
 #include "Coordinate.h"
+
 
 class Maze {
 public:
     explicit Maze(int w, int h);
-    std::vector<Coordinate> getWalls();
 
+    std::vector<Coordinate> getWalls(){
+        return walls;
+    }
+    //std::vector<Coordinate> getPath(){
+        //return path;
+    //}
     Coordinate getStart(){
         return start;
     }
     Coordinate getEnd(){
         return end;
     }
+    int getWidth(){
+        return width;
+    }
+    int getHeight(){
+        return height;
+    }
+
+    std::vector<Coordinate> validMoves(Coordinate p, std::vector<Coordinate> previousMoves);
 
 private:
     Coordinate setStartOrEnd();
     bool isPointValid(Coordinate point, std::vector<Coordinate> notValidPoints);
-    std::vector<Coordinate> validMoves(Coordinate p, std::vector<Coordinate> previousMoves);
     void createMaze();
     void placeWalls();
 

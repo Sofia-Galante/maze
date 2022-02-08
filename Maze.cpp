@@ -3,16 +3,16 @@
 //
 
 #include "Maze.h"
-#include <cstdlib>
-#include <algorithm>
+
 
 #include <cstdio>
+#include <iostream>
 
 Maze::Maze(int w, int h) {
     width = w;
     height = h;
     Coordinate p;
-    //TODO: algoritmo che genera il labirinto
+    //TODO: pulizia nel codice
 
     //sceglie il punto di partenza
     p = setStartOrEnd();
@@ -43,7 +43,6 @@ Maze::Maze(int w, int h) {
 
 
 }
-
 Coordinate Maze::setStartOrEnd() {
     int x, y;
     int wall = rand() % 4; // 0 = up, 1 = right, 2 = down, 3 = left
@@ -67,7 +66,6 @@ Coordinate Maze::setStartOrEnd() {
     Coordinate point(x, y);
     return point;
 }
-
 void Maze::createMaze() {
     //std::vector<Coordinate> path;
     path.push_back(start);
@@ -121,9 +119,9 @@ void Maze::createMaze() {
         moves = validMoves(path.back(), path);
         i=1;
         while(moves.empty()) {
+            i++;
             printf("TORNO INDIETRO\n");
             moves = validMoves(path[path.size()-i], path);
-            i++;
         }
         if(std::count(moves.begin(), moves.end(), inFrontOfExit)){
             path.push_back(inFrontOfExit);
@@ -152,7 +150,6 @@ void Maze::createMaze() {
         moves = validMoves(alreadyControlled.back(), path);
         while(moves.empty() && alreadyControlled.back().operator!=(start)){
             alreadyControlled.pop_back();
-            printf("now = (%d, %d)\n", alreadyControlled.back().getX(), alreadyControlled.back().getY());
             moves = validMoves(alreadyControlled.back(), path);
             i++;
         }
@@ -188,7 +185,6 @@ void Maze::createMaze() {
 
     print();
 }
-
 void Maze::placeWalls(){
     Coordinate ne(path.back().getX()+1, path.back().getY()+1); //nord-est
     Coordinate se(path.back().getX()+1, path.back().getY()-1); //sud-est
@@ -261,10 +257,6 @@ bool Maze::isPointValid(Coordinate point, std::vector<Coordinate> notValidPoints
         return false;
     }
     return true;
-}
-
-std::vector<Coordinate> Maze::getWalls() {
-    return walls;
 }
 
 void Maze::print() {
