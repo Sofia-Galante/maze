@@ -18,9 +18,10 @@ std::vector<Coordinate> MazeSolverSeq::solve(int numberOfParticles) {
     }
 
     //sceglie un vincitore
-    Particle * winner;
+    Particle * winner = &(*particles.begin());
+    printf("\n\n");
     for(auto particle = particles.begin()+1 ; particle != particles.end(); ++particle){
-        if(particle->getSteps() < (particle-1)->getSteps())
+        if(particle->getSteps() < winner->getSteps())
             winner = &(*particle);
     }
 
@@ -42,8 +43,10 @@ void MazeSolverSeq::moveParticle(Particle& particle) {
             i++;
             possibleMoves = maze.validMoves(path[path.size()-i], path);
             particle.addStep(path[path.size()-i]); //non dà noia nel loop perché path contiene la vecchia lista.
+            printf("Indietro in %d, %d\n", particle.getPath().back().getX(), particle.getPath().back().getY());
         }
         particle.addStep(possibleMoves[rand()%possibleMoves.size()]);
+        printf("Avanti in %d, %d\n", particle.getPath().back().getX(), particle.getPath().back().getY());
     }
 }
 
@@ -51,8 +54,8 @@ void MazeSolverSeq::print(Particle * winner){
     std::vector<Coordinate> winnerPath = winner->getPath();
     std::vector<Coordinate> walls = maze.getWalls();
     Coordinate p;
-    for(int i = 0; i < maze.getWidth(); i++){
-        for(int j = 0; j < maze.getHeight(); j++){
+    for(int j=maze.getHeight()-1; j>=0; j--){
+        for(int i=0; i<maze.getWidth(); i++){
             p.setCoordinate(i, j);
             if(std::count(walls.begin(), walls.end(), p))
                 printf("#");

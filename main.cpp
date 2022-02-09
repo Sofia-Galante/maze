@@ -9,7 +9,7 @@
 
 int main() {
     srand(time(NULL));
-    Maze m(10, 10);
+    Maze m(20, 10);
     MazeSolverSeq seq(m);
     seq.solve(10);
 }

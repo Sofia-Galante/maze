@@ -42,6 +42,10 @@ private:
     void createMaze();
     void placeWalls();
 
+    void recovery();
+    std::vector<Coordinate> findWallsToRemove(std::vector<Coordinate> recovery);
+    std::vector<Coordinate> findRecoveryMove(Coordinate p, std::vector<Coordinate> recovery);
+
     void print();
 
     int height;

@@ -11,7 +11,6 @@
 class Particle{
 public:
     explicit Particle(Coordinate start);
-    Coordinate move(std::vector<Coordinate> availableMoves); //Le possibili mosse sono scelte dal Solver e non dalla particella -> possibile paralelizzazione
 
     void addStep(Coordinate point){
         steps++;

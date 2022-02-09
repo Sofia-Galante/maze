@@ -67,7 +67,7 @@ Coordinate Maze::setStartOrEnd() {
     return point;
 }
 void Maze::createMaze() {
-    //std::vector<Coordinate> path;
+
     path.push_back(start);
     Coordinate p;
 
@@ -92,29 +92,11 @@ void Maze::createMaze() {
             walls.push_back(p);
     }
 
-
     std::vector<Coordinate> moves;
-
-    //imposta le mura intorno all'uscita per non creare un deadlock
-    Coordinate inFrontOfExit = validMoves(end, path).front();
-    Coordinate possibleWall;
-    std::vector<Coordinate> possibleWalls;
-    for(int i = inFrontOfExit.getX()-1; i<=inFrontOfExit.getX()+1; i++){
-        for(int j = inFrontOfExit.getY()-1; j<=inFrontOfExit.getY()+1; j++){
-            possibleWall.setCoordinate(i, j);
-            if(possibleWall != inFrontOfExit && !std::count(walls.begin(), walls.end(), possibleWall)){
-                possibleWalls.push_back(possibleWall);
-            }
-        }
-    }
-    for(auto it = possibleWalls.begin() ; it != possibleWalls.end(); ++it){
-        if(it->getX()!=inFrontOfExit.getX() && it->getY()!=inFrontOfExit.getY())
-            walls.push_back(*it);
-    }
-
 
     //crea il cammino dall'entrata all'uscita
     int i;
+    bool needRecovery = false;
     while(path.back()!=end) {
         moves = validMoves(path.back(), path);
         i=1;
@@ -122,18 +104,26 @@ void Maze::createMaze() {
             i++;
             printf("TORNO INDIETRO\n");
             moves = validMoves(path[path.size()-i], path);
+            if(path[path.size()-i].operator==(start))
+                needRecovery = true;
         }
-        if(std::count(moves.begin(), moves.end(), inFrontOfExit)){
-            path.push_back(inFrontOfExit);
+        if(needRecovery){
+            printf("START RECOVERY\n");
+            recovery();
+            printf("END RECOVERY\n");
+            needRecovery = false;
+        }
+        else if(std::count(moves.begin(), moves.end(), end)){
+            //path.push_back(inFrontOfExit);
             path.push_back(end);
         }
         else {
             //espande il cammino
             path.push_back(moves[rand()%moves.size()]);
+            printf("SCELTO %d, %d\n", path.back().getX(), path.back().getY());
             //mette i muri se servono
             placeWalls();
         }
-        printf("SCELTO %d, %d\n", path.back().getX(), path.back().getY());
     }
 
     printf("Cammino valido creato!\n\n");
@@ -263,8 +253,8 @@ void Maze::print() {
     //funzione provvisoria solo per capire come è fatto questo labirinto
     Coordinate p;
     printf("\n\nLABIRINTO\n");
-    for(int i=0; i<width; i++){
-        for(int j=0; j<height; j++){
+    for(int j=height-1; j>=0; j--){
+        for(int i=0; i<width; i++){
             p.setCoordinate(i, j);
             if(std::count(walls.begin(), walls.end(), p))
                 printf("#");
@@ -277,4 +267,101 @@ void Maze::print() {
         }
         printf("\n");
     }
+}
+
+
+void Maze::recovery() {
+    std::vector<Coordinate> recovery;
+    std::vector<Coordinate> moves;
+    std::vector<Coordinate> wallsToRemove;
+    Coordinate wall;
+    Coordinate inFrontOfExit;
+    int i;
+    recovery.push_back(end);
+
+    //guarda se il muro è davanti all'uscita e in caso lo abbatte
+    if(end.getX() == 0)
+        inFrontOfExit.setCoordinate(1, end.getY());
+    else if(end.getX() == width-1)
+        inFrontOfExit.setCoordinate(width-2, end.getY());
+    else if(end.getY() == 0)
+        inFrontOfExit.setCoordinate(end.getX(), 1);
+    else if(end.getY() == height-1)
+        inFrontOfExit.setCoordinate(end.getX(), height-2);
+
+    if(std::count(walls.begin(), walls.end(), inFrontOfExit)){
+        std::remove(walls.begin(), walls.end(), inFrontOfExit); //elimina il muro che blocca l'uscita
+    }
+    recovery.push_back(inFrontOfExit);
+    printf("Vado in (%d, %d)\n", recovery.back().getX(), recovery.back().getY());
+
+    bool isPathRecovered = std::count(path.begin(), path.end(), recovery.back());
+    while(!isPathRecovered){
+
+        wallsToRemove = findWallsToRemove(recovery);
+        moves = findRecoveryMove(recovery.back(), recovery);
+
+        for(auto it = moves.begin(); it != moves.end(); ++it){
+            if(!isPathRecovered && std::count(path.begin(), path.end(), *it)){
+                isPathRecovered = true;
+            }
+        }
+
+        if(!isPathRecovered){
+            //cerca il muro e lo abbatte
+            while(wallsToRemove.empty()){
+                i = 1;
+                while(moves.empty()){
+                    i++;
+                    moves = findRecoveryMove(recovery[recovery.size()-i], recovery);
+                }
+                recovery.push_back(moves[rand()%moves.size()]);
+                printf("Vado in (%d, %d)\n", recovery.back().getX(), recovery.back().getY());
+                wallsToRemove = findWallsToRemove(recovery);
+                //placeWalls();
+                moves = findRecoveryMove(recovery.back(), recovery);
+            }
+            wall = wallsToRemove[rand()%wallsToRemove.size()];
+            std::remove(walls.begin(), walls.end(), wall);
+            recovery.push_back(wall);
+        }
+    }
+
+    //uscita e entrata sono collegate -> inserisco il recovery nel path
+    for(auto it = recovery.end()-1; it != recovery.begin()-1; --it){
+        printf("%d, %d\n", it->getX(), it->getY());
+        path.push_back(*it);
+    }
+}
+
+std::vector<Coordinate> Maze::findRecoveryMove(Coordinate p, std::vector<Coordinate> recovery) {
+    std::vector<Coordinate> moves;
+    std::vector<Coordinate> rightMoves;
+    moves.emplace_back(p.getX(), p.getY()+1);
+    moves.emplace_back(p.getX()+1, p.getY());
+    moves.emplace_back(p.getX(), p.getY()-1);
+    moves.emplace_back(p.getX()-1, p.getY());
+
+    for(auto it = moves.begin() ; it != moves.end(); ++it){
+        if (!std::count(recovery.begin(), recovery.end(), *it))
+            if(it->getX() != 0 && it->getX() != width-1 && it->getY() != 0 && it->getY() != height-1)
+                rightMoves.push_back(*it);
+    }
+    return rightMoves;
+}
+
+std::vector<Coordinate> Maze::findWallsToRemove(std::vector<Coordinate> recovery) {
+    std::vector<Coordinate> moves;
+    std::vector<Coordinate> wallsToRemove;
+    moves.emplace_back(recovery.back().getX(), recovery.back().getY()+1);
+    moves.emplace_back(recovery.back().getX()+1, recovery.back().getY());
+    moves.emplace_back(recovery.back().getX(), recovery.back().getY()-1);
+    moves.emplace_back(recovery.back().getX()-1, recovery.back().getY());
+
+    for(auto it = moves.begin() ; it != moves.end(); ++it){
+        if (std::count(walls.begin(), walls.end(), *it)) //deve essere un muro
+            if(it->getX() != 0 && it->getX() != width-1 && it->getY() != 0 && it->getY() != height-1) //non deve essere un muro di confine
+                wallsToRemove.push_back(*it);
+    }
+    return wallsToRemove;
 }
