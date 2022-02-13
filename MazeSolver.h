@@ -17,7 +17,7 @@ public:
 
 protected:
     virtual void moveParticle(Particle& p) = 0;
-    virtual void print(Particle * p) = 0;
+    virtual void print(Particle &p);
     Maze maze;
 };
 

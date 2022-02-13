@@ -14,7 +14,6 @@ public:
 
 private:
     void moveParticle(Particle & p) override;
-    virtual void print(Particle * p) override;
 };
 
 #endif //MAZE_MAZESOLVERSEQ_H

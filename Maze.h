@@ -18,9 +18,7 @@ public:
     std::vector<Coordinate> getWalls(){
         return walls;
     }
-    //std::vector<Coordinate> getPath(){
-        //return path;
-    //}
+
     Coordinate getStart(){
         return start;
     }
@@ -33,14 +31,18 @@ public:
     int getHeight(){
         return height;
     }
+    int getMaxSteps(){
+        return maxSteps;
+    }
 
     std::vector<Coordinate> validMoves(Coordinate p, std::vector<Coordinate> previousMoves);
 
 private:
-    Coordinate setStartOrEnd();
+    Coordinate findStartOrEnd();
     bool isPointValid(Coordinate point, std::vector<Coordinate> notValidPoints);
     void createMaze();
     void placeWalls();
+    void placeWall(Coordinate p, int x, int y);
 
     void recovery();
     std::vector<Coordinate> findWallsToRemove(std::vector<Coordinate> recovery);
@@ -54,6 +56,7 @@ private:
     std::vector<Coordinate> path;
     Coordinate start;
     Coordinate end;
+    int maxSteps;
 };
 
 #endif //MAZE_MAZE_H

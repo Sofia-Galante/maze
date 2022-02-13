@@ -9,6 +9,6 @@ Coordinate::Coordinate(int x, int y) {
 }
 
 void Coordinate::setCoordinate(int x, int y) {
-    point[0] = x;
-    point[1] = y;
+    this->x = x;
+    this->y = y;
 }

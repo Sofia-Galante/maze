@@ -13,31 +13,32 @@ public:
         setCoordinate(p.getX(), p.getY());
     }
     int getX(){
-        return point[0];
+        return x;
     }
     int getY(){
-        return point[1];
+        return y;
     }
 
     bool operator==(const Coordinate &right) const{
-        if (point[0] != right.point[0])
+        if (x != right.x)
             return false;
-        if (point[1] != right.point[1])
+        if (y != right.y)
             return false;
         return true;
     }
 
 
     bool operator!=(const Coordinate &right) const{
-        if (point[0] != right.point[0])
+        if (x != right.x)
             return true;
-        if (point[1] != right.point[1])
+        if (y != right.y)
             return true;
         return false;
     }
 
 private:
-    int point [2];
+    int x;
+    int y;
 };
 
 #endif //MAZE_COORDINATE_H
