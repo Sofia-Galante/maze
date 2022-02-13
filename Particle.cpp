@@ -6,8 +6,9 @@
 
 #include <cstdlib>
 
-Particle::Particle(Coordinate start) {
+Particle::Particle(Coordinate start, int id) {
     steps = 0;
+    ID = id;
     path.push_back(start); //starting point
 }
 

@@ -2,6 +2,8 @@
 // Created by Sofy on 06/02/2022.
 //
 
+#include <omp.h>
+
 #include "MazeSolver.h"
 
 #ifndef MAZE_MAZESOLVERPAR_H
@@ -14,6 +16,8 @@ public:
 
 private:
     void moveParticle(Particle& p) override;
+    std::vector<Coordinate> validMoves(Coordinate p, std::vector<Coordinate> previousMoves);
+    bool isPointValid(Coordinate point, std::vector<Coordinate> notValidPoints);
 };
 
 #endif //MAZE_MAZESOLVERPAR_H

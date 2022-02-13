@@ -10,7 +10,7 @@
 
 class Particle{
 public:
-    explicit Particle(Coordinate start);
+    explicit Particle(Coordinate start, int id);
 
     void addStep(Coordinate point){
         steps++;
@@ -25,9 +25,14 @@ public:
         return steps;
     }
 
+    int getID(){
+        return ID;
+    }
+
 private:
     std::vector<Coordinate> path;
     int steps;
+    int ID;
 };
 
 #endif //MAZE_PARTICLE_H
