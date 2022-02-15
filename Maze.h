@@ -6,18 +6,16 @@
 #define MAZE_MAZE_H
 
 #include <vector>
+#include <tuple>
 #include <cstdlib>
 #include <algorithm>
 #include "Coordinate.h"
+#include "Map.h"
 
 
 class Maze {
 public:
     explicit Maze(int w, int h);
-
-    std::vector<Coordinate> getWalls(){
-        return walls;
-    }
 
     Coordinate getStart(){
         return start;
@@ -34,29 +32,34 @@ public:
     int getMaxSteps(){
         return maxSteps;
     }
+    Map getMap(){
+        return map;
+    }
 
-    std::vector<Coordinate> validMoves(Coordinate p, std::vector<Coordinate> previousMoves);
+
 
 private:
-    Coordinate findStartOrEnd();
-    bool isPointValid(Coordinate point, std::vector<Coordinate> notValidPoints);
+    void setStartAndEnd();
+    Coordinate setStartOrEnd(int wall);
+    std::vector<Coordinate> validMoves(Coordinate now, bool inRecovery);
+    bool isPointValid(Coordinate point, bool inRecovery);
     void createMaze();
-    void placeWalls();
+    void placeWalls(Coordinate now);
     void placeWall(Coordinate p, int x, int y);
+    Coordinate rewind(Coordinate now);
+
+    int getDirection(Coordinate now, Coordinate prev);
 
     void recovery();
-    std::vector<Coordinate> findWallsToRemove(std::vector<Coordinate> recovery);
-    std::vector<Coordinate> findRecoveryMove(Coordinate p, std::vector<Coordinate> recovery);
-
+    std::vector<Coordinate> findWallsToRemove(Coordinate now);
     void print();
 
     int height;
     int width;
-    std::vector<Coordinate> walls;
-    std::vector<Coordinate> path;
     Coordinate start;
     Coordinate end;
     int maxSteps;
+    Map map; // -1 = wall, {1, 2, 3, 4} = {nord, est, sud, ovest}
 };
 
 #endif //MAZE_MAZE_H

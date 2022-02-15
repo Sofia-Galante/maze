@@ -19,12 +19,13 @@ int main() {
 
     auto t1 = high_resolution_clock::now();
     MazeSolverSeq seq(m);
-    seq.solve(30);
+    seq.solve(1000);
+    std::cout << m.getMaxSteps() <<std::endl;
     auto t2 = high_resolution_clock::now();
 
     auto t3 = high_resolution_clock::now();
     MazeSolverPar par(m);
-    par.solve(30);
+    par.solve(1000);
     auto t4 = high_resolution_clock::now();
 
     duration<double, std::milli> seqTime = t2 - t1;
@@ -33,6 +34,6 @@ int main() {
     std::cout << "Tempo sequenziale: " << seqTime.count() << "ms" << std::endl;
     std::cout << "Tempo parallelo: " << parTime.count() << "ms" << std::endl;
 
-    std::cout << m.getMaxSteps();
+    std::cout << "MaxSteps = " << m.getMaxSteps();
     return 0;
 }

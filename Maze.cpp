@@ -4,33 +4,16 @@
 
 #include "Maze.h"
 
+char DIR[5] {'A', 'N', 'E', 'S', 'O'};
 
 #include <cstdio>
 
-Maze::Maze(int w, int h) {
+Maze::Maze(int w, int h) : map(w, h){
     width = w;
     height = h;
     Coordinate p;
 
-    //sceglie il punto di partenza
-    p = findStartOrEnd();
-    start.setCoordinate(p.getX(), p.getY());
-    end.setCoordinate(p.getX(), p.getY()); //placeholder
-
-
-    //posizioni non valide per l'uscita
-    std::vector<Coordinate> notValidExit;
-    for(int i = start.getX()-2; i<=start.getX()+2; i++){
-        for(int j = start.getY()-2; j<=start.getY()+2; j++){
-            notValidExit.emplace_back(i, j);
-        }
-    }
-
-    //sceglie il punto di arrivo e controlla sia valido
-    while(!isPointValid(p, notValidExit)){
-        p.setCoordinate(findStartOrEnd());
-    }
-    end.setCoordinate(p.getX(), p.getY());
+    setStartAndEnd();
 
     printf("Start = %d,%d\n", start.getX(), start.getY());
     printf("End = %d, %d\n", end.getX(), end.getY());
@@ -41,9 +24,14 @@ Maze::Maze(int w, int h) {
 
 
 }
-Coordinate Maze::findStartOrEnd() {
+void Maze::setStartAndEnd() {
+    int wallS = rand() % 4; // 0 = up, 1 = right, 2 = down, 3 = left
+    int wallE = (wallS + 2) % 4;
+    start = setStartOrEnd(wallS);
+    end = setStartOrEnd(wallE);
+}
+Coordinate Maze::setStartOrEnd(int wall){
     int x, y;
-    int wall = rand() % 4; // 0 = up, 1 = right, 2 = down, 3 = left
     if(wall == 0){
         x = rand()%(width-2)+1;
         y = height-1;
@@ -60,50 +48,49 @@ Coordinate Maze::findStartOrEnd() {
         x = 0;
         y = rand()%(height-2)+1;
     }
-
-    Coordinate point(x, y);
-    return point;
+    return Coordinate(x, y);
 }
 
 void Maze::createMaze() {
 
-    path.push_back(start);
     Coordinate p;
 
     //crea il contorno del labirinto
     for(int i = 0; i<width; i++){
         p.setCoordinate(i, 0);
         if(p.operator!=(start) && p.operator!=(end))
-            walls.push_back(p);
+            map.setValue(p, -1);
 
         p.setCoordinate(i, height-1);
         if(p.operator!=(start) && p.operator!=(end))
-            walls.push_back(p);
+            map.setValue(p, -1);
     }
 
     for(int j = 1; j<height-1; j++){
         p.setCoordinate(0, j);
         if(p.operator!=(start) && p.operator!=(end))
-            walls.push_back(p);
+            map.setValue(p, -1);
 
         p.setCoordinate(width-1, j);
         if(p.operator!=(start) && p.operator!=(end))
-            walls.push_back(p);
+            map.setValue(p, -1);
     }
 
     std::vector<Coordinate> moves;
 
+
     //crea il cammino dall'entrata all'uscita
-    int i;
     bool needRecovery = false;
-    while(path.back()!=end) {
-        moves = validMoves(path.back(), path);
-        i=1;
-        while(moves.empty() && !needRecovery) {
-            i++;
-            printf("TORNO INDIETRO\n");
-            moves = validMoves(path[path.size()-i], path);
-            if(path[path.size()-i].operator==(start))
+    Coordinate prev = start;
+    Coordinate now = validMoves(prev, false).front();
+    map.setValue(now, getDirection(now, prev));
+    map.setValue(prev, getDirection(now, prev));
+    while(map.getValue(end) == 0) {
+        moves = validMoves(now, false);
+        while(moves.empty() && !needRecovery) { //rewind
+            now = rewind(now);
+            moves = validMoves(now, false);
+            if(now==start)
                 needRecovery = true;
         }
         if(needRecovery){
@@ -113,94 +100,61 @@ void Maze::createMaze() {
             needRecovery = false;
         }
         else if(std::count(moves.begin(), moves.end(), end)){
-            path.push_back(end);
+            //path.push_back(end);
+            prev = now;
+            now = end;
+            map.setValue(now, getDirection(now, prev));
         }
         else {
             //espande il cammino
-            path.push_back(moves[rand()%moves.size()]);
-            printf("SCELTO %d, %d\n", path.back().getX(), path.back().getY());
+            //path.push_back(moves[rand()%moves.size()]);
+            prev = now;
+            now = moves[rand()%moves.size()];
+            map.setValue(now, getDirection(now, prev));
+            //printf("SCELTO %d, %d, dir = %c\n", now.getX(), now.getY(), DIR[map.getValue(now)]);
             //mette i muri se servono
-            placeWalls();
+            placeWalls(now);
         }
     }
 
     printf("Cammino valido creato!\n\n");
 
-    maxSteps = path.size()*10;
-    printf("Max Steps = %d\n", maxSteps);
-    //genera il resto del labirinto
-    Coordinate now;
-    std::vector<Coordinate> alreadyControlled;
-    for(auto it = path.begin() ; it != path.end(); ++it)
-        alreadyControlled.push_back(*it);
-
-    //cammina indietro riempendo tutto il resto del labirinto fino all'uscita
-
-    while(alreadyControlled.back().operator!=(start)){
-        moves = validMoves(alreadyControlled.back(), path);
-        while(moves.empty() && alreadyControlled.back().operator!=(start)){
-            alreadyControlled.pop_back();
-            moves = validMoves(alreadyControlled.back(), path);
-            i++;
+    maxSteps = 0;
+    for(int w = 0; w < width; w++){
+        for(int h = 0; h < height; h++){
+            if(map.getValue(Coordinate(w, h)) > 0)
+                maxSteps++;
         }
-        if(alreadyControlled.back().operator!=(start)){
-            //espande il cammino o mette un muro a random
-            path.push_back(moves[rand()%moves.size()]);
-            alreadyControlled.push_back(path.back());
+    }
+    maxSteps = maxSteps*50;
+    printf("Max Steps = %d\n", maxSteps);
+    now = end;
+    while(now != start){
+        moves = validMoves(now, false);
+        while(moves.empty() && now != start) {
+            now = rewind(now);
+            moves = validMoves(now, false);
+        }
+        if(now != start){
+            prev = now;
+            now = moves[rand()%moves.size()];
+            map.setValue(now, getDirection(now, prev));
+            //printf("SCELTO %d, %d con dir = %c\n", now.getX(), now.getY(), DIR[map.getValue(now)]);
             //mette i muri se servono
-            placeWalls();
+            placeWalls(now);
         }
     }
 
     //mette un muro nei posti non esplorati se ce ne sono
-    if(width*height != walls.size()+path.size()){
-        for(int w = 0; w < width; w++){
-            for(int h = 0; h < height; h++){
-                now.setCoordinate(w, h);
-                if(!std::count(path.begin(), path.end(), now) && !std::count(walls.begin(), walls.end(), now))
-                    walls.push_back(now);
-            }
-        }
-    }
-
-    printf("\n\nCAMMINO\n");
-    for(int i=0; i<path.size(); i++){
-        printf("(%d, %d)", path[i].getX(), path[i].getY());
-    }
-
-    printf("\n\nMURA\n");
-    for(auto it = walls.begin() ; it != walls.end(); ++it)
-        printf("(%d, %d) ", it->getX(), it->getY());
-    printf("\n");
+    for(int w = 0; w < width; w++)
+        for(int h = 0; h < height; h++)
+            if(map.getValue(Coordinate(w, h)) == 0)
+                map.setValue(Coordinate(w, h), -1);
 
     print();
 }
-void Maze::placeWalls(){
-    Coordinate ne(path.back().getX()+1, path.back().getY()+1); //nord-est
-    Coordinate se(path.back().getX()+1, path.back().getY()-1); //sud-est
-    Coordinate sw(path.back().getX()-1, path.back().getY()-1); //sud-ovest
-    Coordinate nw(path.back().getX()-1, path.back().getY()+1); //nord-ovest
 
-    placeWall(ne, -1, -1);
-    placeWall(se, 1, -1);
-    placeWall(sw, 1, 1);
-    placeWall(nw, -1, 1);
-}
-
-void Maze::placeWall(Coordinate p, int x, int y) {
-    Coordinate point;
-
-    if(std::count(path.begin(), path.end(), p)) {
-        point.setCoordinate(p.getX(), p.getY()+y);
-        if(!std::count(path.begin(), path.end(), point) && !std::count(walls.begin(), walls.end(), point))
-            walls.push_back(point);
-        point.setCoordinate(p.getX()+x, p.getY());
-        if(!std::count(path.begin(), path.end(), point) && !std::count(walls.begin(), walls.end(), point))
-            walls.push_back(point);
-    }
-}
-
-std::vector<Coordinate> Maze::validMoves(Coordinate p, std::vector<Coordinate> previousMoves) {
+std::vector<Coordinate> Maze::validMoves(Coordinate p, bool inRecovery) {
     std::vector<Coordinate> moves;
     std::vector<Coordinate> rightMoves;
     moves.emplace_back(p.getX(), p.getY()+1);
@@ -208,14 +162,14 @@ std::vector<Coordinate> Maze::validMoves(Coordinate p, std::vector<Coordinate> p
     moves.emplace_back(p.getX(), p.getY()-1);
     moves.emplace_back(p.getX()-1, p.getY());
 
-    for(auto it = moves.begin() ; it != moves.end(); ++it){
-        if(isPointValid(*it, previousMoves))
+    for(auto it = moves.begin(); it != moves.end(); ++it){
+        if(isPointValid(*it, inRecovery)) {
             rightMoves.push_back(*it);
+        }
     }
     return rightMoves;
 }
-
-bool Maze::isPointValid(Coordinate point, std::vector<Coordinate> notValidPoints){
+bool Maze::isPointValid(Coordinate point, bool inRecovery) {
     if(point.getX() < 0 || point.getX() >= width){
         return false;
     }
@@ -223,14 +177,62 @@ bool Maze::isPointValid(Coordinate point, std::vector<Coordinate> notValidPoints
         return false;
     }
 
-    if (std::count(notValidPoints.begin(), notValidPoints.end(), point)){
+    if (map.getValue(point) != 0 && !inRecovery){
         return false;
     }
-    if (std::count(walls.begin(), walls.end(), point)){
-        return false;
-    }
+
     return true;
 }
+
+Coordinate Maze::rewind(Coordinate now){
+    //{1, 2, 3, 4} = {nord, est, sud, ovest}
+    int direction = map.getValue(now);
+    //printf("Sono in %d, %d con d = %d e vado in ", now.getX(), now.getY(), direction);
+    if(direction == 1 || direction == -2)
+        now.setCoordinate(now.getX(), now.getY()-1);
+    else if(direction == 2 || direction == -3)
+        now.setCoordinate(now.getX()-1, now.getY());
+    else if(direction == 3 || direction == -4)
+        now.setCoordinate(now.getX(), now.getY()+1);
+    else
+        now.setCoordinate(now.getX()+1, now.getY());
+    //printf("%d, %d\n", now.getX(), now.getY());
+    return now;
+}
+
+void Maze::placeWalls(Coordinate now){
+    Coordinate ne(now.getX()+1, now.getY()+1); //nord-est
+    Coordinate se(now.getX()+1, now.getY()-1); //sud-est
+    Coordinate sw(now.getX()-1, now.getY()-1); //sud-ovest
+    Coordinate nw(now.getX()-1, now.getY()+1); //nord-ovest
+
+    placeWall(ne, -1, -1);
+    placeWall(se, -1, +1);
+    placeWall(sw, 1, 1);
+    placeWall(nw, 1, -1);
+}
+void Maze::placeWall(Coordinate p, int x, int y) {
+    Coordinate point;
+
+    if(map.getValue(p) > 0) {
+        point.setCoordinate(p.getX(), p.getY()+y);
+        //printf("Possibile muro in %d, %d\n", point.getX(), point.getY());
+        if(map.getValue(point) == 0){
+            map.setValue(point, -1);
+            //printf("Ho messo un muro in %d, %d\n", point.getX(), point.getY());
+        }
+
+        point.setCoordinate(p.getX()+x, p.getY());
+        if(map.getValue(point) == 0){
+            //printf("Possibile muro in %d, %d\n", point.getX(), point.getY());
+            map.setValue(point, -1);
+            //printf("Ho messo un muro in %d, %d\n", point.getX(), point.getY());
+        }
+
+    }
+}
+
+
 
 void Maze::print() {
     //funzione provvisoria solo per capire come è fatto questo labirinto
@@ -239,7 +241,7 @@ void Maze::print() {
     for(int j=height-1; j>=0; j--){
         for(int i=0; i<width; i++){
             p.setCoordinate(i, j);
-            if(std::count(walls.begin(), walls.end(), p))
+            if(map.getValue(p) == -1)
                 printf("#");
             else if(p.operator==(start))
                 printf("S");
@@ -252,105 +254,90 @@ void Maze::print() {
     }
 }
 
-
 void Maze::recovery() {
-    std::vector<Coordinate> recovery;
     std::vector<Coordinate> moves;
+    std::vector<int> directions;
     std::vector<Coordinate> wallsToRemove;
-    Coordinate wall;
-    Coordinate inFrontOfExit;
-    int i;
-    recovery.push_back(end);
-
-    //guarda se il muro è davanti all'uscita e in caso lo abbatte
-
-    /*
-    if(end.getX() == 0)
-        inFrontOfExit.setCoordinate(1, end.getY());
-    else if(end.getX() == width-1)
-        inFrontOfExit.setCoordinate(width-2, end.getY());
-    else if(end.getY() == 0)
-        inFrontOfExit.setCoordinate(end.getX(), 1);
-    else if(end.getY() == height-1)
-        inFrontOfExit.setCoordinate(end.getX(), height-2);
-
-    if(std::count(walls.begin(), walls.end(), inFrontOfExit)){
-        std::remove(walls.begin(), walls.end(), inFrontOfExit); //elimina il muro che blocca l'uscita
-    }
-    recovery.push_back(inFrontOfExit);
-    printf("Vado in (%d, %d)\n", recovery.back().getX(), recovery.back().getY());
-    */
-
-    //bool isPathRecovered = std::count(path.begin(), path.end(), recovery.back());
+    Coordinate now = end;
+    Coordinate next;
     bool isPathRecovered = false;
-    while(!isPathRecovered){
 
-        wallsToRemove = findWallsToRemove(recovery);
-        //moves = findRecoveryMove(recovery.back(), recovery);
-        moves = validMoves(recovery.back(), recovery);
+    while(!isPathRecovered) {
+        wallsToRemove = findWallsToRemove(now);
+        moves = validMoves(now, true);
 
-        for(auto it = moves.begin(); it != moves.end(); ++it){
-            if(!isPathRecovered && std::count(path.begin(), path.end(), *it)){
+        for (auto it = moves.begin(); it != moves.end(); ++it) {
+            if (!isPathRecovered && map.getValue(*it) > 0) {
                 isPathRecovered = true;
+                next = now;
+                now = *it;
+                map.setValue(next, -1-getDirection(next, now));
             }
         }
 
         if(!isPathRecovered){
             //cerca il muro e lo abbatte
             while(wallsToRemove.empty()){
-                i = 1;
                 while(moves.empty()){
-                    i++;
                     //moves = findRecoveryMove(recovery[recovery.size()-i], recovery);
-                    moves = validMoves(recovery[recovery.size()-i], recovery);
+                    now = rewind(now);
                 }
-                recovery.push_back(moves[rand()%moves.size()]);
-                printf("Vado in (%d, %d)\n", recovery.back().getX(), recovery.back().getY());
-                wallsToRemove = findWallsToRemove(recovery);
+                next = now;
+                now = moves[rand()%moves.size()];
+                map.setValue(next, -1-getDirection(next, now));
+                //printf("Vado in (%d, %d)\n", now.getX(), now.getY());
+                wallsToRemove = findWallsToRemove(now);
                 //moves = findRecoveryMove(recovery.back(), recovery);
-                moves = validMoves(recovery[recovery.size()-i], recovery);
+                moves = validMoves(now, true);
             }
-            wall = wallsToRemove[rand()%wallsToRemove.size()];
-            std::remove(walls.begin(), walls.end(), wall);
-            recovery.push_back(wall);
+            next = now;
+            now = wallsToRemove[rand()%wallsToRemove.size()];
+            //printf("Muro in %d, %d\n", now.getX(), now.getY());
+            map.setValue(next, -1-getDirection(next, now));
+            map.setValue(now, 0);
+        }
+
+    }
+    //uscita e entrata sono collegate -> inserisco il recovery nel path
+    for(int i = 0; i < width; i++){
+        for(int j = 0; j < height; j++){
+            Coordinate p(i, j);
+            int value = map.getValue(p);
+            if(value<-1)
+                map.setValue(p, -(value+1));
         }
     }
 
-    //uscita e entrata sono collegate -> inserisco il recovery nel path
-    for(auto it = recovery.end()-1; it != recovery.begin()-1; --it){
-        printf("%d, %d\n", it->getX(), it->getY());
-        path.push_back(*it);
-    }
 }
 
-std::vector<Coordinate> Maze::findRecoveryMove(Coordinate p, std::vector<Coordinate> recovery) {
-    std::vector<Coordinate> moves;
-    std::vector<Coordinate> rightMoves;
-    moves.emplace_back(p.getX(), p.getY()+1);
-    moves.emplace_back(p.getX()+1, p.getY());
-    moves.emplace_back(p.getX(), p.getY()-1);
-    moves.emplace_back(p.getX()-1, p.getY());
-
-    for(auto it = moves.begin() ; it != moves.end(); ++it){
-        if (!std::count(recovery.begin(), recovery.end(), *it))
-            if(it->getX() != 0 && it->getX() != width-1 && it->getY() != 0 && it->getY() != height-1)
-                rightMoves.push_back(*it);
-    }
-    return rightMoves;
-}
-
-std::vector<Coordinate> Maze::findWallsToRemove(std::vector<Coordinate> recovery) {
+std::vector<Coordinate> Maze::findWallsToRemove(Coordinate now) {
     std::vector<Coordinate> moves;
     std::vector<Coordinate> wallsToRemove;
-    moves.emplace_back(recovery.back().getX(), recovery.back().getY()+1);
-    moves.emplace_back(recovery.back().getX()+1, recovery.back().getY());
-    moves.emplace_back(recovery.back().getX(), recovery.back().getY()-1);
-    moves.emplace_back(recovery.back().getX()-1, recovery.back().getY());
+    moves.emplace_back(now.getX(), now.getY()+1);
+    moves.emplace_back(now.getX()+1, now.getY());
+    moves.emplace_back(now.getX(), now.getY()-1);
+    moves.emplace_back(now.getX()-1, now.getY());
 
     for(auto it = moves.begin() ; it != moves.end(); ++it){
-        if (std::count(walls.begin(), walls.end(), *it)) //deve essere un muro
-            if(it->getX() != 0 && it->getX() != width-1 && it->getY() != 0 && it->getY() != height-1) //non deve essere un muro di confine
+        if(it->getX() > 0 && it->getX() < width-1 && it->getY() > 0 && it->getY() < height-1)//non deve essere al confine o oltre
+            if (map.getValue(*it) == -1) //deve essere un muro
                 wallsToRemove.push_back(*it);
     }
     return wallsToRemove;
+}
+
+int Maze::getDirection(Coordinate now, Coordinate prev) {
+    //{1, 2, 3, 4} = {nord, est, sud, ovest}
+    if(prev.getX() == now.getX()){
+        if(prev.getY() == now.getY()-1)
+            return 1;
+        else
+            return 3;
+    }
+    else {
+        if(prev.getX() == now.getX()-1)
+            return 2;
+        else
+            return 4;
+    }
 }

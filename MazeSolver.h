@@ -12,12 +12,14 @@
 class MazeSolver{
 public:
     explicit MazeSolver(Maze m) : maze(m){};
-    virtual std::vector<Coordinate> solve(int numberOfParticles) = 0;
+    virtual void solve(int numberOfParticles) = 0;
 
 
 protected:
-    virtual void moveParticle(Particle& p) = 0;
-    virtual void print(Particle &p);
+    bool moveParticle(Particle& p);
+    virtual std::vector<Coordinate> validMoves(Coordinate now) = 0;
+    bool isPointValid(Coordinate next);
+    void print(Particle &p);
     Maze maze;
 };
 

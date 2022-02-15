@@ -10,10 +10,10 @@
 class MazeSolverSeq : public MazeSolver {
 public:
     explicit MazeSolverSeq(Maze m) : MazeSolver(m){};
-    std::vector<Coordinate> solve(int numberOfParticles) override;
+    void solve(int numberOfParticles) override;
 
 private:
-    void moveParticle(Particle & p) override;
+    std::vector<Coordinate> validMoves(Coordinate now) override;
 };
 
 #endif //MAZE_MAZESOLVERSEQ_H

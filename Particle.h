@@ -6,19 +6,20 @@
 #define MAZE_PARTICLE_H
 
 #include "Coordinate.h"
+#include "Map.h"
 #include <vector>
 
 class Particle{
 public:
-    explicit Particle(Coordinate start, int id);
+    explicit Particle(Coordinate start, int id, Map map);
 
     void addStep(Coordinate point){
         steps++;
-        path.push_back(point);
+        map.incrValue(point);
     }
 
-    std::vector<Coordinate> getPath(){
-        return path;
+    Map getMap(){
+        return map;
     }
 
     int getSteps(){
@@ -30,7 +31,7 @@ public:
     }
 
 private:
-    std::vector<Coordinate> path;
+    Map map;
     int steps;
     int ID;
 };

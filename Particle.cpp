@@ -6,10 +6,10 @@
 
 #include <cstdlib>
 
-Particle::Particle(Coordinate start, int id) {
+Particle::Particle(Coordinate start, int id, Map map) : map(map) {
     steps = 0;
     ID = id;
-    path.push_back(start); //starting point
+    map.incrValue(start);
 }
 
 

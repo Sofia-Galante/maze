@@ -4,11 +4,11 @@
 
 #include "MazeSolverPar.h"
 
-std::vector<Coordinate> MazeSolverPar::solve(int numberOfParticles) {
+void MazeSolverPar::solve(int numberOfParticles) {
     std::vector<Particle> particles;
 
     printf("\n\nRisolvere il labirinto: modo parallelo\n");
-    //fa risolvere il labirinto a tutte le particelle
+
     omp_set_nested(3);
     std::vector<int> seeds;
 
@@ -17,121 +17,70 @@ std::vector<Coordinate> MazeSolverPar::solve(int numberOfParticles) {
         seeds.push_back(rand());
     }
 
-#pragma omp parallel default(none) shared(particles) firstprivate(numberOfParticles, seeds)
-    {
-        //fa risolvere il labirinto a tutte le particelle
-#pragma omp for
-        for (int i = 0; i < numberOfParticles; i++) {
-            srand(seeds[i]);
-            printf("THREAD %d -> Particella n %d entra nel labirinto\n", omp_get_thread_num(), i + 1);
-            Particle p(maze.getStart(), i + 1);
-            moveParticle(p);
-            particles.push_back(p);
-            printf("THREAD %d -> Particella n %d uscita dal labirinto compiendo %d passi\n\n", omp_get_thread_num(), i + 1,
-                   p.getSteps());
+#pragma omp parallel for default(none) shared(particles) firstprivate(numberOfParticles, seeds, maze)
+    //fa risolvere il labirinto a tutte le particelle
+    for (int i = 0; i < numberOfParticles; i++) {
+        srand(seeds[i]);
+        std::vector<Particle> localParticles;
+        printf("THREAD %d -> Particella n %d entra nel labirinto\n", omp_get_thread_num(), i+1);
+        Map map(maze.getWidth(), maze.getHeight());
+        Particle p(maze.getStart(), i+1, map);
+        bool inTime = moveParticle(p);
+        if(inTime){
+            localParticles.push_back(p);
+            printf("THREAD %d -> Particella n %d uscita dal labirinto compiendo %d passi\n\n", omp_get_thread_num(), i+1, p.getSteps());
         }
-
-        //sceglie un vincitore
-
-    }
-
-
-    auto winner = particles.begin();
-    printf("\n\n");
-
-#pragma omp parallel for default(none) firstprivate(particles) shared(winner)
-    for(auto particle =  particles.begin()+1 ; particle != particles.end(); ++particle){
-        //printf("%d vs %d\n", winner->getSteps(), (particle)->getSteps());
-        if(particle->getSteps() < winner->getSteps())
+        else{
+            printf("THREAD %d -> La particella n %d non ha trovato l'uscita\n\n", omp_get_thread_num(), i+1);
+        }
 #pragma omp critical
-            winner = particle;
+        particles.insert(particles.end(), localParticles.begin(), localParticles.end());
     }
 
-    print(*winner);
-    return winner->getPath();
-}
-
-void MazeSolverPar::moveParticle(Particle &particle) {
-
-    std::vector<Coordinate> path;
-    std::vector<Coordinate> possibleMoves;
-    bool exit = false;
-
-    while(particle.getPath().back()!=maze.getEnd() && !exit) {
-        path = particle.getPath();
-        possibleMoves = maze.validMoves(path.back(), path); //PARALLELIZZAZIONE
-        int i = 1;
-        while(possibleMoves.empty() && !exit){
-            i++;
-            possibleMoves = maze.validMoves(path[path.size()-i], path);
-            particle.addStep(path[path.size()-i]);
-            exit = particle.getPath().size() > maze.getMaxSteps();
-            //printf("PARTICELLA %d: Indietro in %d, %d\n", particle.getID(), particle.getPath().back().getX(), particle.getPath().back().getY());
+    if(particles.empty())
+        printf("Nessuna particella ha trovato l'uscita\n");
+    else{
+        //sceglie un vincitore
+        Particle winner = *particles.begin();
+        int size = particles.size();
+#pragma omp parallel for default(none) firstprivate(particles, size) shared(winner)
+        for(int i = 0; i < size; i++){
+#pragma omp flush(winner)
+            if(particles[i].getSteps() < winner.getSteps())
+#pragma omp critical
+                winner = particles[i];
         }
-        if(!exit){
-            particle.addStep(possibleMoves[rand()%possibleMoves.size()]);
-            exit = particle.getPath().size() > maze.getMaxSteps();
-        }
-
-        //printf("PARTICELLA %d: Avanti in %d, %d\n", particle.getID(), particle.getPath().back().getX(), particle.getPath().back().getY());
+        //disegna il cammino del vincitore
+        print(winner);
     }
 }
 
-std::vector<Coordinate> MazeSolverPar::validMoves(Coordinate p, std::vector<Coordinate> previousMoves) {
+
+
+
+std::vector<Coordinate> MazeSolverPar::validMoves(Coordinate now) {
     std::vector<Coordinate> moves;
     std::vector<Coordinate> rightMoves;
-    moves.emplace_back(p.getX(), p.getY()+1);
-    moves.emplace_back(p.getX()+1, p.getY());
-    moves.emplace_back(p.getX(), p.getY()-1);
-    moves.emplace_back(p.getX()-1, p.getY());
+    moves.emplace_back(now.getX(), now.getY()+1);
+    moves.emplace_back(now.getX()+1, now.getY());
+    moves.emplace_back(now.getX(), now.getY()-1);
+    moves.emplace_back(now.getX()-1, now.getY());
 
-#pragma omp parallel for default(none) firstprivate(moves, previousMoves) shared(rightMoves)
-    for(auto it = moves.begin() ; it != moves.end(); ++it){
-        //printf("MOSSA %d, %d\n", it->getX(), it->getY());
-        if(isPointValid(*it, previousMoves))
-            rightMoves.push_back(*it);
+    //TODO: perché il lock rallenta così tanto?
+
+    //omp_lock_t lock;
+    //omp_init_lock(&lock);
+
+//#pragma omp parallel for default(none) firstprivate(moves, maze) shared(rightMoves, lock)
+    for(int i = 0; i < 4; i++){
+        if(isPointValid(moves[i])){
+            //omp_set_lock(&lock);
+            rightMoves.push_back(moves[i]);
+            //omp_unset_lock(&lock);
+        }
     }
+    //omp_destroy_lock(&lock);
 
     return rightMoves;
-}
-
-bool MazeSolverPar::isPointValid(Coordinate point, std::vector<Coordinate> notValidPoints) {
-    bool valid = true;
-    std::vector<Coordinate> walls = maze.getWalls();
-
-#pragma omp parallel sections default(none) shared(valid) firstprivate(point, notValidPoints, walls)
-    {
-#pragma omp section
-        {
-            if(point.getX() < 0 || point.getX() >= maze.getWidth()){
-                //printf("Sono in sezione 1 (%d,%d)\n", point.getX(), point.getY());
-                valid = false;
-            }
-        }
-
-#pragma omp section
-        {
-            if(point.getY() < 0 || point.getY() >= maze.getHeight()){
-                //printf("Sono in sezione 2 (%d,%d)\n", point.getX(), point.getY());
-                valid = false;
-            }
-        }
-#pragma omp section
-        {
-            if (std::count(notValidPoints.begin(), notValidPoints.end(), point)){
-                //printf("Sono in sezione 3 (%d,%d)\n", point.getX(), point.getY());
-                valid = false;
-            }
-        }
-
-#pragma omp section
-        {
-            if (std::count(walls.begin(), walls.end(), point)){
-                //printf("Sono in sezione 4 (%d,%d)\n", point.getX(), point.getY());
-                valid = false;
-            }
-        }
-    }
-    return valid;
 }
 
