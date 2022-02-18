@@ -12,8 +12,6 @@ public:
     explicit MazeSolverSeq(Maze m) : MazeSolver(m){};
     void solve(int numberOfParticles) override;
 
-private:
-    std::vector<Coordinate> validMoves(Coordinate now) override;
 };
 
 #endif //MAZE_MAZESOLVERSEQ_H

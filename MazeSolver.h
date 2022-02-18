@@ -17,7 +17,7 @@ public:
 
 protected:
     bool moveParticle(Particle& p);
-    virtual std::vector<Coordinate> validMoves(Coordinate now) = 0;
+    virtual std::vector<Coordinate> validMoves(Coordinate now);
     bool isPointValid(Coordinate next);
     void print(Particle &p);
     Maze maze;

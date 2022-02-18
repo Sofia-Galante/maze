@@ -12,11 +12,15 @@
 
 class MazeSolverPar : public MazeSolver{
 public:
-    explicit MazeSolverPar(Maze m) : MazeSolver(m) {}
+    explicit MazeSolverPar(Maze m, int threads, bool lock) : MazeSolver(m), threads(threads), withLock(lock) {}
     void solve(int numberOfParticles) override;
 
 private:
     std::vector<Coordinate> validMoves(Coordinate p) override;
+    std::vector<Coordinate> validMovesLock(Coordinate p);
+
+    int threads;
+    bool withLock;
 };
 
 #endif //MAZE_MAZESOLVERPAR_H

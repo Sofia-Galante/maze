@@ -37,19 +37,3 @@ void MazeSolverSeq::solve(int numberOfParticles) {
     }
 }
 
-
-std::vector<Coordinate> MazeSolverSeq::validMoves(Coordinate now) {
-    std::vector<Coordinate> moves;
-    std::vector<Coordinate> rightMoves;
-    moves.emplace_back(now.getX(), now.getY()+1);
-    moves.emplace_back(now.getX()+1, now.getY());
-    moves.emplace_back(now.getX(), now.getY()-1);
-    moves.emplace_back(now.getX()-1, now.getY());
-
-    for(auto it = moves.begin(); it != moves.end(); ++it)
-        if(isPointValid(*it))
-            rightMoves.push_back(*it);
-
-    return rightMoves;
-}
-
