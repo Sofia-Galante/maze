@@ -1,0 +1,2 @@
+Sequenziale;Parallelo senza lock;Parallelo con lock
+80.8732 ms;41.2345 ms;2513.86 ms

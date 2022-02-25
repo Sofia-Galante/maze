@@ -39,11 +39,11 @@ public:
 
 
 private:
+    void createMaze();
     void setStartAndEnd();
     Coordinate setStartOrEnd(int wall);
     std::vector<Coordinate> validMoves(Coordinate now, bool inRecovery);
     bool isPointValid(Coordinate point, bool inRecovery);
-    void createMaze();
     void placeWalls(Coordinate now);
     void placeWall(Coordinate p, int x, int y);
     Coordinate rewind(Coordinate now);

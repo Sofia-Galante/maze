@@ -9,9 +9,7 @@ class Coordinate{
 public:
     Coordinate(int x = 0, int y = 0);
     void setCoordinate(int x, int y);
-    void setCoordinate(Coordinate p){
-        setCoordinate(p.getX(), p.getY());
-    }
+
     int getX(){
         return x;
     }
@@ -26,7 +24,6 @@ public:
             return false;
         return true;
     }
-
 
     bool operator!=(const Coordinate &right) const{
         if (x != right.x)

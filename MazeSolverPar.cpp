@@ -73,7 +73,7 @@ std::vector<Coordinate> MazeSolverPar::validMovesLock(Coordinate now) {
     omp_lock_t lock;
     omp_init_lock(&lock);
 
-#pragma omp parallel for default(none) firstprivate(moves, maze) shared(rightMoves, lock)
+#pragma omp parallel for default(none) firstprivate(moves, maze) shared(rightMoves, lock) num_threads(4)
     for(int i = 0; i < 4; i++){
         if(isPointValid(moves[i])){
             omp_set_lock(&lock);
