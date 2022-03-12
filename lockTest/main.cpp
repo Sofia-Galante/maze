@@ -50,7 +50,7 @@ void lockTest() {
     std::cout << std::endl;
 
     std::ofstream csvFile;
-    csvFile.open ("../../report/test/test4.csv");
+    csvFile.open ("test4.csv");
 
     csvFile << "Sequenziale" << ";" << "Parallelo senza lock" << ";" << "Parallelo con lock" << "\n";
     csvFile << seqTime.count() << " ms" << ";" << parTime.count() << " ms" << ";" << lockedTime.count() << " ms";
