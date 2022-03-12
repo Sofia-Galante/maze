@@ -1,10 +1,26 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+import os
 
-t1 = pd.read_csv('test1.csv', names = ['x', 'seq', 'par'], sep=';')
-t2 = pd.read_csv('test2.csv', names = ['x', 'seq', 'par'], sep=';')
-t3 = pd.read_csv('test3.csv', names = ['x', 'seq', 'par'], sep=';')
-t3_2 = pd.read_csv('test3_2.csv', names = ['x', 'par1', 'par2', 'par3'], sep=';')
+n = 10
+
+t1 = list()
+t2 = list()
+t3 = list()
+t3_2 = list()
+
+for i in range(n):
+    os.system("maze")
+    t1.append(pd.read_csv('test1.csv', names = ['x', 'seq', 'par'], sep=';'))
+    t2.append(pd.read_csv('test2.csv', names = ['x', 'seq', 'par'], sep=';'))
+    t3.append(pd.read_csv('test3.csv', names = ['x', 'seq', 'par'], sep=';'))
+    t3_2.append(pd.read_csv('test3_2.csv', names = ['x', 'par1', 'par2', 'par3'], sep=';'))
+os.system("lockTest")
+
+t1 = pd.concat(t1).groupby("x").mean().reset_index()
+t2 = pd.concat(t2).groupby("x").mean().reset_index()
+t3 = pd.concat(t3).groupby("x").mean().reset_index()
+t3_2 = pd.concat(t3_2).groupby("x").mean().reset_index()
 
 plt.plot(t1["x"], t1["seq"], color = 'blue', label = 'sequenziale')
 plt.plot(t1["x"], t1["par"], color = 'red', label = 'parallelo')
