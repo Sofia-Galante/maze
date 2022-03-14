@@ -14,7 +14,7 @@ class Map {
 public:
     explicit Map(int width, int height);
 
-    int getValue(Coordinate p){
+    int getValue(Coordinate p) const{
         assert(p.getX() >= 0 && p.getY() >= 0 && p.getX() < width && p.getY() < height);
         return map[p.getX()+p.getY()*width];
     }

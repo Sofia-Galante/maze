@@ -17,26 +17,24 @@ class Maze {
 public:
     explicit Maze(int w, int h);
 
-    Coordinate getStart(){
+    Coordinate getStart() const{
         return start;
     }
-    Coordinate getEnd(){
+    Coordinate getEnd() const{
         return end;
     }
-    int getWidth(){
+    int getWidth() const{
         return width;
     }
-    int getHeight(){
+    int getHeight() const{
         return height;
     }
-    int getMaxSteps(){
+    int getMaxSteps() const{
         return maxSteps;
     }
-    Map getMap(){
+    Map getMap() const{
         return map;
     }
-
-
 
 private:
     void createMaze();

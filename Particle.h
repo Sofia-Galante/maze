@@ -17,16 +17,13 @@ public:
         steps++;
         map.incrValue(point);
     }
-
-    Map getMap(){
+    Map getMap() const{
         return map;
     }
-
-    int getSteps(){
+    int getSteps() const{
         return steps;
     }
-
-    int getID(){
+    int getID() const{
         return ID;
     }
 

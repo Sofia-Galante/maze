@@ -7,13 +7,13 @@
 
 class Coordinate{
 public:
-    Coordinate(int x = 0, int y = 0);
+    explicit Coordinate(int x = 0, int y = 0);
     void setCoordinate(int x, int y);
 
-    int getX(){
+    int getX() const{
         return x;
     }
-    int getY(){
+    int getY() const{
         return y;
     }
 
@@ -24,7 +24,6 @@ public:
             return false;
         return true;
     }
-
     bool operator!=(const Coordinate &right) const{
         if (x != right.x)
             return true;

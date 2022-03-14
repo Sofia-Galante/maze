@@ -13,8 +13,6 @@ class MazeSolver{
 public:
     explicit MazeSolver(Maze m) : maze(m){};
     virtual void solve(int numberOfParticles) = 0;
-
-
 protected:
     bool moveParticle(Particle& p);
     virtual std::vector<Coordinate> validMoves(Coordinate now);

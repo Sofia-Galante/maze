@@ -7,7 +7,6 @@
 Coordinate::Coordinate(int x, int y) {
     setCoordinate(x, y);
 }
-
 void Coordinate::setCoordinate(int x, int y) {
     this->x = x;
     this->y = y;
