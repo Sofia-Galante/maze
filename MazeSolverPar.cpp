@@ -53,10 +53,11 @@ firstprivate(numberOfParticles, seeds, maze) num_threads(threads)
         num_threads(threads)
         for(int i = 0; i < particles.size(); i++){
 #pragma omp flush(winner)
-            if(particles[i].getSteps() < winner.getSteps())
+            if(particles[i].getSteps() < winner.getSteps()) {
 #pragma omp critical
                 winner = particles[i];
 #pragma omp flush(winner)
+            }
         }
         //disegna il cammino del vincitore
         print(winner);
